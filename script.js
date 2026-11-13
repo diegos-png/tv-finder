@@ -1,13 +1,16 @@
 const showSelect = document.getElementById("show-select");
 const showDetails = document.getElementById("show-details");
+const flexBox = document.getElementById("flexbox")
 const message = document.getElementById("message")
 
 async function loadShows() {
     const url = "https://api.tvmaze.com/shows?page=0"
 
     try {
-        const res = await fetch(url)
+        message.style.display = "block"
+        message.classList.remove("error")
         message.textContent = "Loading . . ."
+        const res = await fetch(url)
 
         if (!res.ok) {
             if (res.status === 404) {
@@ -18,10 +21,12 @@ async function loadShows() {
 
         const shows = await res.json()
         shows.sort((a, b) => (b.rating.average || 0) - (a.rating.average || 0))
+        message.style.display = "none"
         message.innerHTML = ""
         fillDropdown(shows.slice(0, 25))
     }
     catch (error) {
+        message.classList.add("error")
         message.textContent = error.message
         console.error(error)
     }
@@ -47,8 +52,10 @@ async function loadShowDetails(id) {
     const url = `https://api.tvmaze.com/shows/${id}`
 
     try {
-        const res = await fetch(url)
+        message.style.display = "block"
+        message.classList.remove("error")
         message.textContent = "Loading . . ."
+        const res = await fetch(url)
 
         if (!res.ok) {
             if (res.status === 404) {
@@ -58,10 +65,12 @@ async function loadShowDetails(id) {
         }
 
         const show = await res.json()
+        message.style.display = "none"
         message.innerHTML = ""
         displayDetails(show)
     }
     catch (error) {
+        message.classList.add("error")
         message.textContent = error.message
         console.error(error)
     }
@@ -78,10 +87,12 @@ showSelect.addEventListener("change", function () {
 
 function displayDetails(show) {
     showDetails.innerHTML = ""
+    const showContent = document.createElement("div")
+    showContent.classList.add("card")
 
     const showName = document.createElement("h1")
     showName.textContent = show.name
-    showDetails.appendChild(showName)
+    showContent.appendChild(showName)
 
     const showImg = document.createElement("img")
     if (show.image) {
@@ -96,10 +107,12 @@ function displayDetails(show) {
     }
 
     const showSummary = document.createElement("p")
+    showSummary.id = "summary"
     showSummary.innerHTML = show.summary
-    showDetails.appendChild(showSummary)
+    showContent.appendChild(showSummary)
 
     const showStats = document.createElement("p")
+    showStats.id = "stats"
     if (show.genres.length > 0) {
         showStats.textContent = `Generes: ${show.genres.join(", ")}.`
     }
@@ -117,12 +130,21 @@ function displayDetails(show) {
     showStats.textContent += ` Status: ${show.status}.`
 
     if (show.rating.average) {
-        showStats.textContent += ` Rating: ${show.rating.average}`
+        const score = show.rating.average
+        let ratingClass = "rating-low"
+        if(score >=8.0){
+            ratingClass = "rating-high"
+        }
+        else if (score >= 6.0) {
+            ratingClass = "rating-mid"
+        }
+        showStats.innerHTML += ` Rating: <span class="rating-badge ${ratingClass}">${score}</span>`
     }
     else {
-        showStats.textContent += ` Rating: Not rated.`
+        showStats.innerHTML += ` Rating: Not rated.`
     }
-    showDetails.appendChild(showStats)
+    showContent.appendChild(showStats)
+    showDetails.appendChild(showContent)
 
 }
 
