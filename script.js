@@ -1,23 +1,28 @@
 const showSelect = document.getElementById("show-select");
 const showDetails = document.getElementById("show-details");
+const message = document.getElementById("message")
 
 async function loadShows() {
     const url = "https://api.tvmaze.com/shows?page=0"
 
     try {
         const res = await fetch(url)
+        message.textContent = "Loading . . ."
 
         if (!res.ok) {
+            if (res.status === 404) {
+                throw new Error(`404: Show not found`)
+            }
             throw new Error(`Request failed with status ${res.status}`)
         }
 
         const shows = await res.json()
         shows.sort((a, b) => (b.rating.average || 0) - (a.rating.average || 0))
-        shows.slice(0, 25)
+        message.innerHTML = ""
         fillDropdown(shows.slice(0, 25))
-        // keep only the first 25 shows after sorting
     }
     catch (error) {
+        message.textContent = error.message
         console.error(error)
     }
 }
@@ -43,15 +48,21 @@ async function loadShowDetails(id) {
 
     try {
         const res = await fetch(url)
+        message.textContent = "Loading . . ."
 
         if (!res.ok) {
+            if (res.status === 404) {
+                throw new Error(`404: Show not found`)
+            }
             throw new Error(`Request failed with status ${res.status}`)
         }
 
         const show = await res.json()
-        console.log(show)
+        message.innerHTML = ""
+        displayDetails(show)
     }
     catch (error) {
+        message.textContent = error.message
         console.error(error)
     }
 }
@@ -64,5 +75,55 @@ showSelect.addEventListener("change", function () {
 
     loadShowDetails(id)
 })
+
+function displayDetails(show) {
+    showDetails.innerHTML = ""
+
+    const showName = document.createElement("h1")
+    showName.textContent = show.name
+    showDetails.appendChild(showName)
+
+    const showImg = document.createElement("img")
+    if (show.image) {
+        showImg.src = show.image.medium
+        showImg.alt = `${show.name} poster`
+        showDetails.appendChild(showImg)
+    }
+    else {
+        const noImg = document.createElement("p")
+        noImg.textContent = "No poster available"
+        showDetails.appendChild(noImg)
+    }
+
+    const showSummary = document.createElement("p")
+    showSummary.innerHTML = show.summary
+    showDetails.appendChild(showSummary)
+
+    const showStats = document.createElement("p")
+    if (show.genres.length > 0) {
+        showStats.textContent = `Generes: ${show.genres.join(", ")}.`
+    }
+    else {
+        showStats.textContent = "Not listed."
+    }
+
+    if (show.premiered) {
+        showStats.textContent += ` Premier date: ${show.premiered}.`
+    }
+    else {
+        showStats.textContent += " Premier date: Unknown."
+    }
+
+    showStats.textContent += ` Status: ${show.status}.`
+
+    if (show.rating.average) {
+        showStats.textContent += ` Rating: ${show.rating.average}`
+    }
+    else {
+        showStats.textContent += ` Rating: Not rated.`
+    }
+    showDetails.appendChild(showStats)
+
+}
 
 loadShows()
