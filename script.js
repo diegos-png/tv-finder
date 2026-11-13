@@ -132,7 +132,7 @@ function displayDetails(show) {
     if (show.rating.average) {
         const score = show.rating.average
         let ratingClass = "rating-low"
-        if(score >=8.0){
+        if (score >= 8.0) {
             ratingClass = "rating-high"
         }
         else if (score >= 6.0) {
